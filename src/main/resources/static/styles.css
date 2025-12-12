@@ -1,0 +1,32 @@
+/* ITINERIS COLOR MATCHED — DEEP BLUE, TEAL, ORANGE ACCENT, PROFESSIONAL LOOK */
+
+body { font-family: Arial, sans-serif; margin: 20px; background: #f0f4f8; }
+
+.text-primary { color: #002d72 !important; }  /* Deep Blue from Logo */
+
+.btn-primary {
+    background-color: #00a8a8; /* Teal from Logo */
+    border-color: #00a8a8;
+}
+
+.btn-success {
+    background-color: #ff6b35; /* Orange from Logo */
+    border-color: #ff6b35;
+}
+
+.btn-warning {
+    background-color: #ff6b35; /* Orange for Send Reminder */
+    border-color: #ff6b35;
+}
+
+.card-header.bg-primary { background-color: #002d72 !important; }
+
+.table-light { background-color: #e6f2f8 !important; }  /* Light Teal Tint */
+
+.shortfall { background-color: #ffefe8 !important; color: #d64100; }  /* Soft Orange Highlight */
+
+.table td, .table th { padding: 12px; border-bottom: 1px solid #dee2e6; }
+
+.card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+
+.form-control { border-radius: 8px; }
