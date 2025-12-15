@@ -21,56 +21,98 @@ public class AttendanceController {
     @Autowired
     private AttendanceService attendanceService;
 
+    /* =========================================================
+       UPLOAD EXCEL
+       ========================================================= */
     @PostMapping("/upload")
     public ResponseEntity<String> uploadExcel(@RequestParam("file") MultipartFile file) {
         try {
             String message = attendanceService.uploadExcel(file);
             return ResponseEntity.ok(message);
         } catch (IOException e) {
-            return ResponseEntity.badRequest().body("Upload failed: " + e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body("Upload failed: " + e.getMessage());
         }
     }
 
+    /* =========================================================
+       DASHBOARD API
+       - No silent filtering
+       - Full dataset by default
+       ========================================================= */
     @GetMapping("/api/dashboard")
     public List<EmployeeSummary> getDashboard(
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
-        LocalDate startDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : LocalDate.now().minusMonths(1);
-        LocalDate endDate = (to != null && !to.isEmpty()) ? LocalDate.parse(to) : LocalDate.now();
+
+        LocalDate startDate =
+                (from != null && !from.isEmpty())
+                        ? LocalDate.parse(from)
+                        : LocalDate.of(2000, 1, 1); // ALL DATA
+
+        LocalDate endDate =
+                (to != null && !to.isEmpty())
+                        ? LocalDate.parse(to)
+                        : LocalDate.now();
+
         return attendanceService.getDashboardData(startDate, endDate);
     }
 
+    /* =========================================================
+       SEND REMINDER
+       ========================================================= */
     @PostMapping("/send-reminder/{employeeId}")
-    public ResponseEntity<String> sendReminder(@PathVariable String employeeId) {
+    public ResponseEntity<String> sendReminder(
+            @PathVariable String employeeId) {
+
         attendanceService.sendReminder(employeeId);
         return ResponseEntity.ok("Reminder sent successfully.");
     }
 
+    /* =========================================================
+       EXPORT DASHBOARD TO EXCEL
+       - Uses SAME date logic as dashboard
+       ========================================================= */
     @GetMapping("/api/export-excel")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(required = false) String from,
-                            @RequestParam(required = false) String to) throws IOException {
-        LocalDate startDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : LocalDate.now().minusMonths(1);
-        LocalDate endDate = (to != null && !to.isEmpty()) ? LocalDate.parse(to) : LocalDate.now();
-        List<EmployeeSummary> data = attendanceService.getDashboardData(startDate, endDate);
+                            @RequestParam(required = false) String to)
+            throws IOException {
+
+        LocalDate startDate =
+                (from != null && !from.isEmpty())
+                        ? LocalDate.parse(from)
+                        : LocalDate.of(2000, 1, 1); // ALL DATA
+
+        LocalDate endDate =
+                (to != null && !to.isEmpty())
+                        ? LocalDate.parse(to)
+                        : LocalDate.now();
+
+        List<EmployeeSummary> data =
+                attendanceService.getDashboardData(startDate, endDate);
 
         response.setContentType("application/octet-stream");
-        response.setHeader("Content-Disposition", "attachment; filename=attendance_dashboard.xlsx");
+        response.setHeader(
+                "Content-Disposition",
+                "attachment; filename=attendance_dashboard.xlsx"
+        );
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
-            XSSFSheet sheet = workbook.createSheet("Shortfall Employees");
+            XSSFSheet sheet =
+                    workbook.createSheet("Employees Below Compliance");
 
-            // Header row — UPDATED TO DAYS
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Emp ID");
-            headerRow.createCell(1).setCellValue("Name");
-            headerRow.createCell(2).setCellValue("Attended Days");
-            headerRow.createCell(3).setCellValue("Avg Hours/Day");
-            headerRow.createCell(4).setCellValue("Shortfall (days)");
-            headerRow.createCell(5).setCellValue("Remainder Status");
-            headerRow.createCell(6).setCellValue("Email");
+            // Header
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Emp ID");
+            header.createCell(1).setCellValue("Employee Name");
+            header.createCell(2).setCellValue("Attended Days");
+            header.createCell(3).setCellValue("Avg Hours / Day");
+            header.createCell(4).setCellValue("Shortfall (Days)");
+            header.createCell(5).setCellValue("Status");
+            header.createCell(6).setCellValue("Email");
 
-            // Data rows — UPDATED TO DAYS
+            // Data
             int rowNum = 1;
             for (EmployeeSummary emp : data) {
                 Row row = sheet.createRow(rowNum++);

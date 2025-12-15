@@ -1,5 +1,4 @@
-// scripts.js — FINAL WITH DEBUG LOGS
-
+// 3. scripts.js — FULL FINAL CODE (Shortfall in days only)
 const API = '';
 
 // LOGIN
@@ -33,42 +32,36 @@ async function uploadFile() {
     }
 }
 
-// DASHBOARD LOAD — WITH DEBUG LOGS
+// DASHBOARD LOAD — SHORTFALL DAYS ONLY
 async function loadDashboard(from = '', to = '') {
     let url = '/api/dashboard';
     if (from && to) url += `?from=${from}&to=${to}`;
 
-    console.log('Fetching data from: ' + url);  // DEBUG
-
     try {
         const res = await fetch(url);
-        if (!res.ok) {
-            console.error('API error: ' + res.status);  // DEBUG
-            alert('Failed to load data');
-            return;
-        }
         const data = await res.json();
-        console.log('Data fetched: ', data);  // DEBUG — CHECK IF EMPTY
 
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
+
         data.forEach(emp => {
             const tr = document.createElement('tr');
             if (emp.shortfallDays > 0) tr.classList.add('shortfall');
+
             tr.innerHTML = `
                 <td>${emp.employeeId}</td>
                 <td>${emp.employeeName}</td>
                 <td>${emp.attendedDays}</td>
                 <td>${emp.avgHours.toFixed(2)}</td>
-                <td><b>${emp.shortfallDays}</b></td>  <!-- UPDATED TO DAYS -->
+                <td><b>${emp.shortfallDays}</b></td>
                 <td>${emp.remainderStatus}</td>
                 <td><button class="btn btn-sm btn-warning" onclick="sendReminder('${emp.employeeId}')">Send Reminder</button></td>
             `;
             tbody.appendChild(tr);
         });
     } catch (err) {
-        console.error('Load error: ', err);  // DEBUG
-        alert('Connection error');
+        console.error(err);
+        alert('Failed to load dashboard');
     }
 }
 

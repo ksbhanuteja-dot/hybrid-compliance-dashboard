@@ -1,27 +1,70 @@
 package com.hybrid.attendancetracker.dto;
 
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+
 public class EmployeeSummary {
+
     private String employeeId;
     private String employeeName;
     private String email;
-    private int attendedDays = 0;
+
+    // track distinct attendance days
+    private final Set<LocalDate> attendedDates = new HashSet<>();
+
     private double totalHours = 0.0;
-    private double avgHours = 0.0;
-    private int shortfallDays = 0;
+
+    // derived values
+    private int attendedDays;
+    private double avgHours;
+    private int shortfallDays;
+
+    private boolean specialEmployee;
     private String remainderStatus = "Pending";
 
-    // Constructors
-    public EmployeeSummary() {}
+    // constants
+    private static final int NORMAL_TARGET_DAYS = 12;
+    private static final int SPECIAL_TARGET_DAYS = 8;
+    private static final double SPECIAL_MIN_AVG_HOURS = 5.0;
 
-    // Method to add a record's hours and recalculate
-    public void addHours(double hours) {
-        attendedDays++;
-        totalHours += hours;
-        avgHours = attendedDays > 0 ? totalHours / attendedDays : 0.0;
-        shortfallDays = Math.max(0, 12 - attendedDays);  // Target 12 days
+    public void addDailyHours(LocalDate date, double hours) {
+        // only count once per date
+        if (attendedDates.add(date)) {
+            totalHours += hours;
+            recalc();
+        }
     }
 
-    // Getters
+    public void applyPolicy(boolean isSpecialEmployee) {
+        this.specialEmployee = isSpecialEmployee;
+
+        int targetDays = isSpecialEmployee
+                ? SPECIAL_TARGET_DAYS
+                : NORMAL_TARGET_DAYS;
+
+        this.shortfallDays = Math.max(0, targetDays - attendedDays);
+
+        // optional: set remainder status
+        if (isSpecialEmployee) {
+            if (attendedDays >= SPECIAL_TARGET_DAYS && avgHours >= SPECIAL_MIN_AVG_HOURS) {
+                remainderStatus = "Compliant";
+            } else {
+                remainderStatus = "Pending";
+            }
+        } else {
+            remainderStatus = attendedDays >= NORMAL_TARGET_DAYS
+                    ? "Compliant"
+                    : "Pending";
+        }
+    }
+
+    private void recalc() {
+        this.attendedDays = attendedDates.size();
+        this.avgHours = attendedDays > 0 ? totalHours / attendedDays : 0.0;
+    }
+
+    // getters
     public String getEmployeeId() { return employeeId; }
     public String getEmployeeName() { return employeeName; }
     public String getEmail() { return email; }
@@ -29,15 +72,11 @@ public class EmployeeSummary {
     public double getTotalHours() { return totalHours; }
     public double getAvgHours() { return avgHours; }
     public int getShortfallDays() { return shortfallDays; }
+    public boolean isSpecialEmployee() { return specialEmployee; }
     public String getRemainderStatus() { return remainderStatus; }
 
-    // Setters
+    // setters
     public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
     public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
     public void setEmail(String email) { this.email = email; }
-    public void setAttendedDays(int attendedDays) { this.attendedDays = attendedDays; }
-    public void setTotalHours(double totalHours) { this.totalHours = totalHours; }
-    public void setAvgHours(double avgHours) { this.avgHours = avgHours; }
-    public void setShortfallDays(int shortfallDays) { this.shortfallDays = shortfallDays; }
-    public void setRemainderStatus(String remainderStatus) { this.remainderStatus = remainderStatus; }
 }
